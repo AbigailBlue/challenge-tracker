@@ -663,13 +663,23 @@
                 const today = new Date();
                 let streak = 0;
                 let checkDate = new Date(today);
+                let isToday = true;
 
-                // Count backwards from today
+                // Count backwards from today, but don't let today break historical streaks
                 for (let i = 0; i < 90; i++) {
                     const dateStr = checkDate.toISOString().split('T')[0];
                     const entry = this.data.dailyEntries[dateStr];
 
-                    if (!entry) break;
+                    if (!entry) {
+                        if (isToday) {
+                            // Skip today if no entry exists, continue to yesterday
+                            isToday = false;
+                            checkDate.setDate(checkDate.getDate() - 1);
+                            continue;
+                        }
+                        // Break on historical days with no entry
+                        break;
+                    }
 
                     let completed = false;
                     if (habit === 'calorieTracking') {
@@ -680,10 +690,13 @@
 
                     if (completed) {
                         streak++;
-                    } else {
+                    } else if (!isToday) {
+                        // Only break on historical incomplete days, not today
                         break;
                     }
+                    // If today is incomplete, don't count it but don't break the streak either
 
+                    isToday = false;
                     checkDate.setDate(checkDate.getDate() - 1);
                 }
 
