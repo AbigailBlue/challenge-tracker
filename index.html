@@ -1,0 +1,960 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="theme-color" content="#2563eb">
+    <title>90-Day Transformation Tracker</title>
+    
+    <style>
+        /* Reset and base styles */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            line-height: 1.5;
+            font-size: 1rem;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+        }
+
+        /* Color scheme variables */
+        :root {
+            --primary-blue: #2563eb;
+            --success-green: #059669;
+            --background: #f8fafc;
+            --text: #1e293b;
+            --progress-fill: #3b82f6;
+            --border-radius: 8px;
+            --spacing: 1rem;
+            --touch-target: 44px;
+        }
+
+        /* Main container */
+        .app {
+            max-width: 480px;
+            margin: 0 auto;
+            min-height: 100vh;
+            background: white;
+            position: relative;
+            padding-bottom: 80px; /* Space for bottom navigation */
+        }
+
+        /* Header */
+        .header {
+            background: var(--primary-blue);
+            color: white;
+            padding: var(--spacing);
+            text-align: center;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .day-counter {
+            font-size: 1.5rem;
+            font-weight: bold;
+            margin-bottom: 0.25rem;
+        }
+
+        .days-remaining {
+            font-size: 0.9rem;
+            opacity: 0.9;
+            margin-bottom: 0.5rem;
+        }
+
+        /* Progress bar */
+        .progress-container {
+            background: rgba(255, 255, 255, 0.2);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+        }
+
+        .progress-bar {
+            background: rgba(255, 255, 255, 0.8);
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        /* Content area */
+        .content {
+            padding: var(--spacing);
+        }
+
+        .view {
+            display: none;
+        }
+
+        .view.active {
+            display: block;
+        }
+
+        /* Today view */
+        .today-date {
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: var(--spacing);
+            text-align: center;
+        }
+
+        .habit-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: var(--spacing);
+            margin-bottom: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .habit-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+        }
+
+        .habit-title {
+            display: flex;
+            align-items: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+        }
+
+        .habit-title span {
+            margin-right: 0.5rem;
+        }
+
+        .habit-checkbox {
+            width: 24px;
+            height: 24px;
+            cursor: pointer;
+            transform: scale(1.2);
+        }
+
+        .streak {
+            color: var(--success-green);
+            font-size: 0.9rem;
+            font-weight: 600;
+        }
+
+        .habit-input {
+            width: 100%;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            margin-top: 0.5rem;
+            min-height: var(--touch-target);
+        }
+
+        .habit-input:focus {
+            outline: none;
+            border-color: var(--primary-blue);
+            box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.1);
+        }
+
+        /* Calorie tracking special layout */
+        .calorie-checkboxes {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .calorie-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        /* Progress summary */
+        .progress-summary {
+            text-align: center;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--success-green);
+            margin-top: var(--spacing);
+            padding: var(--spacing);
+            background: rgba(5, 150, 105, 0.1);
+            border-radius: var(--border-radius);
+        }
+
+        /* Week view */
+        .week-header {
+            text-align: center;
+            font-size: 1.25rem;
+            font-weight: bold;
+            margin-bottom: var(--spacing);
+        }
+
+        .week-habit {
+            display: flex;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding: 0.75rem;
+            background: white;
+            border-radius: var(--border-radius);
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .week-habit-title {
+            flex: 0 0 120px;
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        .week-dots {
+            display: flex;
+            gap: 0.5rem;
+            flex: 1;
+        }
+
+        .day-dot {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: #d1d5db;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            color: white;
+        }
+
+        .day-dot.completed {
+            background: var(--success-green);
+        }
+
+        .week-streak {
+            color: var(--success-green);
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+
+        /* Settings view */
+        .settings-card {
+            background: white;
+            border: 1px solid #e2e8f0;
+            border-radius: var(--border-radius);
+            padding: var(--spacing);
+            margin-bottom: 1rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+        }
+
+        .settings-title {
+            font-size: 1.1rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .settings-button {
+            background: var(--primary-blue);
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: var(--border-radius);
+            font-size: 1rem;
+            cursor: pointer;
+            width: 100%;
+            margin-top: 0.5rem;
+            min-height: var(--touch-target);
+        }
+
+        .settings-button:hover {
+            background: #1d4ed8;
+        }
+
+        .settings-button.danger {
+            background: #dc2626;
+        }
+
+        .settings-button.danger:hover {
+            background: #b91c1c;
+        }
+
+        /* Bottom navigation */
+        .bottom-nav {
+            position: fixed;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 480px;
+            background: white;
+            border-top: 1px solid #e2e8f0;
+            display: flex;
+            z-index: 20;
+        }
+
+        .nav-item {
+            flex: 1;
+            padding: 0.75rem;
+            text-align: center;
+            cursor: pointer;
+            border: none;
+            background: transparent;
+            color: #6b7280;
+            font-size: 0.9rem;
+            min-height: var(--touch-target);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.25rem;
+        }
+
+        .nav-item.active {
+            color: var(--primary-blue);
+            background: rgba(37, 99, 235, 0.1);
+        }
+
+        .nav-icon {
+            font-size: 1.2rem;
+        }
+
+        /* Responsive design */
+        @media (min-width: 768px) {
+            .app {
+                max-width: 600px;
+            }
+            
+            .content {
+                padding: 1.5rem;
+            }
+            
+            .habit-card {
+                padding: 1.5rem;
+            }
+        }
+
+        /* Loading and success states */
+        .success-message {
+            background: rgba(5, 150, 105, 0.1);
+            color: var(--success-green);
+            padding: 0.5rem;
+            border-radius: var(--border-radius);
+            font-size: 0.9rem;
+            text-align: center;
+            margin-top: 0.5rem;
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+
+        .success-message.show {
+            opacity: 1;
+        }
+
+        /* Accessibility improvements */
+        @media (prefers-reduced-motion: reduce) {
+            * {
+                transition: none !important;
+                animation: none !important;
+            }
+        }
+
+        /* High contrast mode */
+        @media (prefers-contrast: high) {
+            .habit-card {
+                border: 2px solid #000;
+            }
+            
+            .day-dot {
+                border: 2px solid #000;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="app">
+        <header class="header">
+            <div class="day-counter" id="dayCounter">Day 1 of 90</div>
+            <div class="days-remaining" id="daysRemaining">89 days remaining</div>
+            <div class="progress-container">
+                <div class="progress-bar" id="progressBar"></div>
+            </div>
+        </header>
+
+        <main class="content">
+            <!-- Today View -->
+            <div id="todayView" class="view active">
+                <div class="today-date" id="todayDate">Today - July 22</div>
+
+                <!-- House Cleaning -->
+                <div class="habit-card">
+                    <div class="habit-header">
+                        <div class="habit-title">
+                            <span>🏠</span> House Cleaning
+                        </div>
+                        <input type="checkbox" class="habit-checkbox" id="houseCleaning" data-habit="houseCleaning">
+                        <div class="streak" id="houseCleaningStreak">0-day streak</div>
+                    </div>
+                    <input type="text" class="habit-input" id="houseCleaningDetails" 
+                           placeholder="What did you clean?" maxlength="100">
+                </div>
+
+                <!-- Fitness Activity -->
+                <div class="habit-card">
+                    <div class="habit-header">
+                        <div class="habit-title">
+                            <span>💪</span> Fitness Activity
+                        </div>
+                        <input type="checkbox" class="habit-checkbox" id="fitness" data-habit="fitness">
+                        <div class="streak" id="fitnessStreak">0-day streak</div>
+                    </div>
+                    <input type="text" class="habit-input" id="fitnessDetails" 
+                           placeholder="Activity description" maxlength="100">
+                </div>
+
+                <!-- Art Time -->
+                <div class="habit-card">
+                    <div class="habit-header">
+                        <div class="habit-title">
+                            <span>🎨</span> Art Time
+                        </div>
+                        <input type="checkbox" class="habit-checkbox" id="art" data-habit="art">
+                        <div class="streak" id="artStreak">0-day streak</div>
+                    </div>
+                    <input type="number" class="habit-input" id="artMinutes" 
+                           placeholder="Minutes" min="0" max="999">
+                </div>
+
+                <!-- Calorie Tracking -->
+                <div class="habit-card">
+                    <div class="habit-header">
+                        <div class="habit-title">
+                            <span>🍎</span> Calorie Tracking
+                        </div>
+                        <div class="streak" id="calorieTrackingStreak">0-day streak</div>
+                    </div>
+                    <div class="calorie-checkboxes">
+                        <div class="calorie-item">
+                            <input type="checkbox" class="habit-checkbox" id="calorieIntake" data-habit="calorieTracking" data-subtype="intake">
+                            <label for="calorieIntake">Logged intake</label>
+                        </div>
+                        <div class="calorie-item">
+                            <input type="checkbox" class="habit-checkbox" id="calorieDeficit" data-habit="calorieTracking" data-subtype="deficit">
+                            <label for="calorieDeficit">Tracked deficit</label>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Body Measurements -->
+                <div class="habit-card">
+                    <div class="habit-header">
+                        <div class="habit-title">
+                            <span>📊</span> Body Measurements
+                        </div>
+                        <input type="checkbox" class="habit-checkbox" id="measurements" data-habit="measurements">
+                        <div class="streak" id="measurementsStreak">0-day streak</div>
+                    </div>
+                </div>
+
+                <div class="progress-summary" id="progressSummary">0 of 5 habits completed today</div>
+                <div class="success-message" id="successMessage"></div>
+            </div>
+
+            <!-- Week View -->
+            <div id="weekView" class="view">
+                <div class="week-header" id="weekHeader">Week of July 16-22</div>
+                <div id="weekContent"></div>
+            </div>
+
+            <!-- Settings View -->
+            <div id="settingsView" class="view">
+                <div class="settings-card">
+                    <div class="settings-title">Challenge Info</div>
+                    <div id="challengeInfo">Day 1 of 90, started on July 22, 2025</div>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">Data Management</div>
+                    <button class="settings-button" onclick="exportData()">
+                        📥 Export Data (JSON)
+                    </button>
+                    <button class="settings-button danger" onclick="clearAllData()">
+                        🗑️ Clear All Data
+                    </button>
+                </div>
+
+                <div class="settings-card">
+                    <div class="settings-title">App Info</div>
+                    <div>90-Day Transformation Tracker v1.0</div>
+                    <div style="margin-top: 0.5rem; font-size: 0.9rem; color: #6b7280;">
+                        Built with vanilla HTML, CSS, and JavaScript
+                    </div>
+                </div>
+            </div>
+        </main>
+
+        <nav class="bottom-nav">
+            <button class="nav-item active" onclick="switchView('todayView', this)">
+                <div class="nav-icon">📅</div>
+                <div>Today</div>
+            </button>
+            <button class="nav-item" onclick="switchView('weekView', this)">
+                <div class="nav-icon">📊</div>
+                <div>Week</div>
+            </button>
+            <button class="nav-item" onclick="switchView('settingsView', this)">
+                <div class="nav-icon">⚙️</div>
+                <div>Settings</div>
+            </button>
+        </nav>
+    </div>
+
+    <script>
+        // Application state management
+        class TransformationTracker {
+            constructor() {
+                this.data = this.loadData();
+                this.init();
+            }
+
+            // Initialize the app on first load or return visit
+            init() {
+                try {
+                    // Set app start date if this is the first time
+                    if (!this.data.appStartDate) {
+                        this.data.appStartDate = new Date().toISOString().split('T')[0];
+                        this.saveData();
+                    }
+
+                    this.updateDisplay();
+                    this.attachEventListeners();
+                    this.checkDateChange();
+                } catch (error) {
+                    console.error('Error initializing app:', error);
+                    this.showError('Failed to initialize app. Please refresh the page.');
+                }
+            }
+
+            // Load data from localStorage with fallback structure
+            loadData() {
+                try {
+                    const stored = localStorage.getItem('90dayTracker');
+                    if (stored) {
+                        return JSON.parse(stored);
+                    }
+                } catch (error) {
+                    console.error('Error loading data from localStorage:', error);
+                }
+
+                // Return default data structure
+                return {
+                    appStartDate: null,
+                    dailyEntries: {}
+                };
+            }
+
+            // Save data to localStorage with error handling
+            saveData() {
+                try {
+                    localStorage.setItem('90dayTracker', JSON.stringify(this.data));
+                } catch (error) {
+                    console.error('Error saving data to localStorage:', error);
+                    this.showError('Unable to save data. Your progress may not be preserved.');
+                }
+            }
+
+            // Calculate current day number (1-90)
+            getCurrentDay() {
+                if (!this.data.appStartDate) return 1;
+                
+                const startDate = new Date(this.data.appStartDate);
+                const today = new Date();
+                const diffTime = today - startDate;
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                
+                return Math.min(Math.max(diffDays + 1, 1), 90);
+            }
+
+            // Get today's date string (YYYY-MM-DD)
+            getTodayString() {
+                return new Date().toISOString().split('T')[0];
+            }
+
+            // Get today's entry or create empty one
+            getTodayEntry() {
+                const todayStr = this.getTodayString();
+                if (!this.data.dailyEntries[todayStr]) {
+                    this.data.dailyEntries[todayStr] = {
+                        houseCleaning: { completed: false, details: '' },
+                        fitness: { completed: false, details: '' },
+                        art: { completed: false, minutes: null },
+                        calorieTracking: { intake: false, deficit: false },
+                        measurements: { completed: false }
+                    };
+                }
+                return this.data.dailyEntries[todayStr];
+            }
+
+            // Update all display elements
+            updateDisplay() {
+                this.updateHeader();
+                this.updateTodayView();
+                this.updateWeekView();
+                this.updateSettingsView();
+            }
+
+            // Update header with day counter and progress
+            updateHeader() {
+                const currentDay = this.getCurrentDay();
+                const remaining = 90 - currentDay + 1;
+                const progress = ((currentDay - 1) / 89) * 100;
+
+                document.getElementById('dayCounter').textContent = `Day ${currentDay} of 90`;
+                document.getElementById('daysRemaining').textContent = `${Math.max(remaining, 0)} days remaining`;
+                document.getElementById('progressBar').style.width = `${Math.max(progress, 0)}%`;
+            }
+
+            // Update today's date and habit states
+            updateTodayView() {
+                const today = new Date();
+                const options = { weekday: 'long', month: 'long', day: 'numeric' };
+                document.getElementById('todayDate').textContent = 
+                    `Today - ${today.toLocaleDateString('en-US', options)}`;
+
+                const entry = this.getTodayEntry();
+
+                // Update checkboxes and inputs
+                document.getElementById('houseCleaning').checked = entry.houseCleaning.completed;
+                document.getElementById('houseCleaningDetails').value = entry.houseCleaning.details || '';
+
+                document.getElementById('fitness').checked = entry.fitness.completed;
+                document.getElementById('fitnessDetails').value = entry.fitness.details || '';
+
+                document.getElementById('art').checked = entry.art.completed;
+                document.getElementById('artMinutes').value = entry.art.minutes || '';
+
+                document.getElementById('calorieIntake').checked = entry.calorieTracking.intake;
+                document.getElementById('calorieDeficit').checked = entry.calorieTracking.deficit;
+
+                document.getElementById('measurements').checked = entry.measurements.completed;
+
+                // Update streaks
+                this.updateStreaks();
+
+                // Update progress summary
+                this.updateProgressSummary();
+            }
+
+            // Calculate and display current streaks for each habit
+            updateStreaks() {
+                const habits = ['houseCleaning', 'fitness', 'art', 'calorieTracking', 'measurements'];
+                
+                habits.forEach(habit => {
+                    const streak = this.calculateStreak(habit);
+                    const streakElement = document.getElementById(`${habit}Streak`);
+                    if (streakElement) {
+                        streakElement.textContent = `${streak}-day streak`;
+                    }
+                });
+            }
+
+            // Calculate streak for a specific habit
+            calculateStreak(habit) {
+                const today = new Date();
+                let streak = 0;
+                let checkDate = new Date(today);
+
+                // Count backwards from today
+                for (let i = 0; i < 90; i++) {
+                    const dateStr = checkDate.toISOString().split('T')[0];
+                    const entry = this.data.dailyEntries[dateStr];
+
+                    if (!entry) break;
+
+                    let completed = false;
+                    if (habit === 'calorieTracking') {
+                        completed = entry[habit].intake && entry[habit].deficit;
+                    } else {
+                        completed = entry[habit].completed;
+                    }
+
+                    if (completed) {
+                        streak++;
+                    } else {
+                        break;
+                    }
+
+                    checkDate.setDate(checkDate.getDate() - 1);
+                }
+
+                return streak;
+            }
+
+            // Update progress summary
+            updateProgressSummary() {
+                const entry = this.getTodayEntry();
+                let completed = 0;
+                const total = 5;
+
+                if (entry.houseCleaning.completed) completed++;
+                if (entry.fitness.completed) completed++;
+                if (entry.art.completed) completed++;
+                if (entry.calorieTracking.intake && entry.calorieTracking.deficit) completed++;
+                if (entry.measurements.completed) completed++;
+
+                const summary = document.getElementById('progressSummary');
+                summary.textContent = `${completed} of ${total} habits completed today`;
+
+                if (completed === total) {
+                    summary.style.background = 'rgba(5, 150, 105, 0.2)';
+                    this.showSuccessMessage('Amazing! All habits completed today! 🎉');
+                } else {
+                    summary.style.background = 'rgba(5, 150, 105, 0.1)';
+                }
+            }
+
+            // Update week view with 7-day grid
+            updateWeekView() {
+                const today = new Date();
+                const startOfWeek = new Date(today);
+                startOfWeek.setDate(today.getDate() - today.getDay()); // Start from Sunday
+
+                const weekHeader = document.getElementById('weekHeader');
+                const weekContent = document.getElementById('weekContent');
+
+                // Update header
+                const startStr = startOfWeek.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                const endDate = new Date(startOfWeek);
+                endDate.setDate(endDate.getDate() + 6);
+                const endStr = endDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric' });
+                weekHeader.textContent = `Week of ${startStr} - ${endStr}`;
+
+                // Build week view
+                const habits = [
+                    { key: 'houseCleaning', title: '🏠 House' },
+                    { key: 'fitness', title: '💪 Fitness' },
+                    { key: 'art', title: '🎨 Art' },
+                    { key: 'calorieTracking', title: '🍎 Calories' },
+                    { key: 'measurements', title: '📊 Measurements' }
+                ];
+
+                weekContent.innerHTML = '';
+
+                habits.forEach(habit => {
+                    const habitDiv = document.createElement('div');
+                    habitDiv.className = 'week-habit';
+
+                    const titleDiv = document.createElement('div');
+                    titleDiv.className = 'week-habit-title';
+                    titleDiv.textContent = habit.title;
+
+                    const dotsDiv = document.createElement('div');
+                    dotsDiv.className = 'week-dots';
+
+                    // Create dots for each day of the week
+                    for (let i = 0; i < 7; i++) {
+                        const dayDate = new Date(startOfWeek);
+                        dayDate.setDate(startOfWeek.getDate() + i);
+                        const dateStr = dayDate.toISOString().split('T')[0];
+
+                        const dot = document.createElement('div');
+                        dot.className = 'day-dot';
+
+                        const entry = this.data.dailyEntries[dateStr];
+                        let completed = false;
+
+                        if (entry) {
+                            if (habit.key === 'calorieTracking') {
+                                completed = entry[habit.key].intake && entry[habit.key].deficit;
+                            } else {
+                                completed = entry[habit.key].completed;
+                            }
+                        }
+
+                        if (completed) {
+                            dot.classList.add('completed');
+                        }
+
+                        // Add day letter
+                        const dayLetter = ['S', 'M', 'T', 'W', 'T', 'F', 'S'][i];
+                        dot.textContent = dayLetter;
+
+                        dotsDiv.appendChild(dot);
+                    }
+
+                    const streakDiv = document.createElement('div');
+                    streakDiv.className = 'week-streak';
+                    const streak = this.calculateStreak(habit.key);
+                    streakDiv.textContent = `${streak}-day streak`;
+
+                    habitDiv.appendChild(titleDiv);
+                    habitDiv.appendChild(dotsDiv);
+                    habitDiv.appendChild(streakDiv);
+                    weekContent.appendChild(habitDiv);
+                });
+            }
+
+            // Update settings view
+            updateSettingsView() {
+                const currentDay = this.getCurrentDay();
+                const startDate = new Date(this.data.appStartDate);
+                const formattedDate = startDate.toLocaleDateString('en-US', { 
+                    year: 'numeric', 
+                    month: 'long', 
+                    day: 'numeric' 
+                });
+
+                document.getElementById('challengeInfo').textContent = 
+                    `Day ${currentDay} of 90, started on ${formattedDate}`;
+            }
+
+            // Handle habit checkbox changes
+            handleHabitChange(element) {
+                const habit = element.dataset.habit;
+                const subtype = element.dataset.subtype;
+                const entry = this.getTodayEntry();
+
+                if (habit === 'calorieTracking') {
+                    entry[habit][subtype] = element.checked;
+                } else {
+                    entry[habit].completed = element.checked;
+                }
+
+                this.saveData();
+                this.updateStreaks();
+                this.updateProgressSummary();
+
+                if (element.checked) {
+                    this.showSuccessMessage('Great job! Keep it up! 💪');
+                }
+            }
+
+            // Handle text input changes
+            handleInputChange(element) {
+                const entry = this.getTodayEntry();
+                const value = element.value;
+
+                if (element.id === 'houseCleaningDetails') {
+                    entry.houseCleaning.details = value;
+                } else if (element.id === 'fitnessDetails') {
+                    entry.fitness.details = value;
+                } else if (element.id === 'artMinutes') {
+                    entry.art.minutes = value ? parseInt(value) : null;
+                }
+
+                this.saveData();
+            }
+
+            // Attach event listeners
+            attachEventListeners() {
+                // Habit checkboxes
+                document.querySelectorAll('.habit-checkbox').forEach(checkbox => {
+                    checkbox.addEventListener('change', (e) => this.handleHabitChange(e.target));
+                });
+
+                // Text inputs
+                document.querySelectorAll('.habit-input').forEach(input => {
+                    input.addEventListener('change', (e) => this.handleInputChange(e.target));
+                    input.addEventListener('blur', (e) => this.handleInputChange(e.target));
+                });
+            }
+
+            // Check if date has changed since last visit
+            checkDateChange() {
+                const lastVisit = localStorage.getItem('lastVisit');
+                const today = this.getTodayString();
+
+                if (lastVisit && lastVisit !== today) {
+                    // Date changed, update display
+                    this.updateDisplay();
+                }
+
+                localStorage.setItem('lastVisit', today);
+            }
+
+            // Show success message
+            showSuccessMessage(message) {
+                const messageEl = document.getElementById('successMessage');
+                messageEl.textContent = message;
+                messageEl.classList.add('show');
+                
+                setTimeout(() => {
+                    messageEl.classList.remove('show');
+                }, 3000);
+            }
+
+            // Show error message
+            showError(message) {
+                console.error(message);
+                alert(message); // Simple error display for now
+            }
+        }
+
+        // Navigation functions
+        function switchView(viewId, navElement) {
+            // Hide all views
+            document.querySelectorAll('.view').forEach(view => view.classList.remove('active'));
+            document.querySelectorAll('.nav-item').forEach(item => item.classList.remove('active'));
+
+            // Show selected view
+            document.getElementById(viewId).classList.add('active');
+            navElement.classList.add('active');
+
+            // Update week view if switching to it
+            if (viewId === 'weekView') {
+                app.updateWeekView();
+            }
+        }
+
+        // Export data functionality
+        function exportData() {
+            try {
+                const dataStr = JSON.stringify(app.data, null, 2);
+                const dataBlob = new Blob([dataStr], { type: 'application/json' });
+                
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(dataBlob);
+                link.download = `90-day-tracker-backup-${new Date().toISOString().split('T')[0]}.json`;
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+                
+                app.showSuccessMessage('Data exported successfully! 📥');
+            } catch (error) {
+                console.error('Error exporting data:', error);
+                app.showError('Failed to export data. Please try again.');
+            }
+        }
+
+        // Clear all data functionality
+        function clearAllData() {
+            if (confirm('Are you sure you want to clear all data? This cannot be undone.')) {
+                if (confirm('This will delete your entire 90-day progress. Are you absolutely sure?')) {
+                    try {
+                        localStorage.removeItem('90dayTracker');
+                        localStorage.removeItem('lastVisit');
+                        location.reload();
+                    } catch (error) {
+                        console.error('Error clearing data:', error);
+                        app.showError('Failed to clear data. Please try again.');
+                    }
+                }
+            }
+        }
+
+        // Initialize app when DOM is loaded
+        let app;
+        document.addEventListener('DOMContentLoaded', () => {
+            app = new TransformationTracker();
+        });
+
+        // Handle visibility changes to update display when app becomes visible
+        document.addEventListener('visibilitychange', () => {
+            if (!document.hidden && app) {
+                app.checkDateChange();
+                app.updateDisplay();
+            }
+        });
+    </script>
+</body>
+</html>
